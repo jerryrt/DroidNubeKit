@@ -8,7 +8,7 @@ public class DNKUnauthorizedResponse {
     private String uuid;
     private String serverErrorCode;
     private String reason;
-    private String redirectUrl;
+    private String redirectURL;
 
     public String getUuid() {
         return uuid;
@@ -34,11 +34,11 @@ public class DNKUnauthorizedResponse {
         this.reason = reason;
     }
 
-    public String getRedirectUrl() {
-        return redirectUrl;
+    public String getRedirectURL() {
+        return redirectURL;
     }
 
-    public void setRedirectUrl(String redirectUrl) {
-        this.redirectUrl = redirectUrl;
+    public void setRedirectUrl(String redirectURL) {
+        this.redirectURL = redirectURL;
     }
 }

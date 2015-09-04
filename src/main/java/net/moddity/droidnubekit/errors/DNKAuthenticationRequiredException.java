@@ -15,7 +15,7 @@ public class DNKAuthenticationRequiredException extends DNKException {
     }
 
     public String getRedirectURL() {
-        return unauthorizedResponse.getRedirectUrl();
+        return unauthorizedResponse.getRedirectURL();
     }
 
 }

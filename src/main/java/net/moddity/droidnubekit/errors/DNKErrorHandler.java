@@ -1,5 +1,7 @@
 package net.moddity.droidnubekit.errors;
 
+import android.util.Log;
+
 import net.moddity.droidnubekit.DroidNubeKit;
 import net.moddity.droidnubekit.responsemodels.DNKUnauthorizedResponse;
 
@@ -19,7 +21,9 @@ public class DNKErrorHandler implements ErrorHandler {
         switch (cause.getResponse().getStatus()) {
             case DNKErrorCodes.AUTHENTICATION_REQUIRED:
                 DNKUnauthorizedResponse errorResponse = (DNKUnauthorizedResponse)cause.getBodyAs(DNKUnauthorizedResponse.class);
-                DroidNubeKit.showAuthDialog(errorResponse.getRedirectUrl());
+
+                Log.i("CK", "open auth page at: " + errorResponse.getRedirectURL());
+                DroidNubeKit.showAuthDialog(errorResponse.getRedirectURL());
 
                 return new DNKAuthenticationRequiredException(DNKErrorCodes.AUTHENTICATION_REQUIRED, cause.getCause(), errorResponse);
 
