@@ -31,8 +31,11 @@ public class DNKWebViewAuthActivity extends Activity {
         setContentView(webView);
         webView.getSettings().setJavaScriptEnabled(true);
         webView.setWebViewClient(new WebViewClient() {
+
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                Log.d("CK", "Started loading of: "+url+" <-> "+getUrlRedirectPattern());
+
                 if(url != null && url.startsWith(urlRedirectPattern)) {
                     Log.d("CK", "Redirect found");
                     Uri redirectUri = Uri.parse(url);
@@ -41,7 +44,6 @@ public class DNKWebViewAuthActivity extends Activity {
                     return;
                 }
 
-                Log.d("CK", "Starting to load :"+url+" - "+getUrlRedirectPattern());
             }
 
             @Override
@@ -51,7 +53,9 @@ public class DNKWebViewAuthActivity extends Activity {
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                Log.d("CK", "Possible overwrite loading of: "+url+" <-> "+getUrlRedirectPattern());
                 if(url.startsWith(urlRedirectPattern)) {
+                    Log.d("CK", "Overwrite loading.");
                     Uri redirectUri = Uri.parse(url);
                     redirectHandler.onRedirectFound(redirectUri);
                     finish();

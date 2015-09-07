@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -81,6 +82,14 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
     private DNKUser currentUser;
 
     public Set<Class<?>> modelClasses = new HashSet<>();
+
+    public boolean hasSessionKey() {
+        return ckSession != null && ckSession.length() > 0;
+    }
+
+    public boolean isSessionAlive() {
+        return currentUser != null;
+    }
 
 
     /**
@@ -392,7 +401,7 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
     public static void showAuthDialog(String redirectURL) {
         Intent intent = new Intent(DroidNubeKit.getInstance().getContext(), DNKWebViewAuthActivity.class);
         intent.putExtra(DroidNubeKitConstants.WEBVIEW_REDIRECT_URL_EXTRA, redirectURL);
-        intent.putExtra(DroidNubeKitConstants.WEBVIEW_REDIRECT_PATTERN_EXTRA, DroidNubeKitConstants.WEBVIEW_REDIRECT_URL_PREFIX+DroidNubeKit.getInstance().appContainerIdentifier.toLowerCase());
+        intent.putExtra(DroidNubeKitConstants.WEBVIEW_REDIRECT_PATTERN_EXTRA, "http://localhost/");
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         DroidNubeKit.getInstance().getContext().startActivity(intent);
     }
@@ -407,11 +416,17 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
 
     @Override
     public void onRedirectFound(Uri redirectUri) {
-        if(DroidNubeKitConstants.WEBVIEW_REDIRECT_LOGIN_ENDPOINT.equals(redirectUri.getHost())) {
-            String ckSession = redirectUri.getQueryParameter("ckSession");
-            if(ckSession != null) {
-                saveckSession(ckSession);
-            }
+//        if(DroidNubeKitConstants.WEBVIEW_REDIRECT_LOGIN_ENDPOINT.equals(redirectUri.getHost())) {
+//            String ckSession = redirectUri.getQueryParameter("ckSession");
+//            if(ckSession != null) {
+//                saveckSession(ckSession);
+//            }
+//        }
+
+        String ckSession = redirectUri.getQueryParameter("ckSession");
+        Log.d("CK", "got CloudKit session key? " + ckSession);
+        if(ckSession != null && ckSession.length() > 0) {
+            saveckSession(ckSession);
         }
     }
 
