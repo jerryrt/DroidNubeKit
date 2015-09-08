@@ -12,6 +12,13 @@ import retrofit.RetrofitError;
  * Created by jaume on 12/6/15.
  */
 public class DNKErrorHandler implements ErrorHandler {
+
+    private final DroidNubeKit kit;
+
+    public DNKErrorHandler(DroidNubeKit kit) {
+        this.kit = kit;
+    }
+
     @Override
     public Throwable handleError(RetrofitError cause) {
 
@@ -23,7 +30,7 @@ public class DNKErrorHandler implements ErrorHandler {
                 DNKUnauthorizedResponse errorResponse = (DNKUnauthorizedResponse)cause.getBodyAs(DNKUnauthorizedResponse.class);
 
                 Log.i("CK", "open auth page at: " + errorResponse.getRedirectURL());
-                DroidNubeKit.showAuthDialog(errorResponse.getRedirectURL());
+                kit.showAuthDialog(errorResponse.getRedirectURL());
 
                 return new DNKAuthenticationRequiredException(DNKErrorCodes.AUTHENTICATION_REQUIRED, cause.getCause(), errorResponse);
 

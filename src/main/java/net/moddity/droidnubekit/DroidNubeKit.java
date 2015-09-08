@@ -95,7 +95,7 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
     /**
      * Initializes the CloudKit Service
      */
-    private DroidNubeKit() {
+    public DroidNubeKit() {
 
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.registerTypeAdapter(new TypeToken<Map<String, DNKRecordField>>() {}.getType(), new DNKRecordFieldDeserializer());
@@ -114,10 +114,27 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
                 .setLogLevel(RestAdapter.LogLevel.FULL)
                 .setConverter(new GsonConverter(gsonBuilder.create()))
                 .setRequestInterceptor(requestInterceptor)
-                .setErrorHandler(new DNKErrorHandler())
+                .setErrorHandler(new DNKErrorHandler(this))
                 .build();
 
-        cloudKitService = restAdapter.create(CloudKitService.class);
+        this.cloudKitService = restAdapter.create(CloudKitService.class);
+    }
+
+    public void init(String apiToken, String appContainerIdentifier, DroidNubeKitConstants.kEnvironmentType environmentType, Context context) {
+
+        this.apiToken = apiToken;
+        this.environmentType = environmentType;
+        this.appContainerIdentifier = appContainerIdentifier;
+        this.context = context;
+
+        try {
+            this.modelClasses = this.getClasspathClasses();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        this.checkForSession();
+
     }
 
     /**
@@ -142,34 +159,23 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
      * @param context Pass a context to the lib
      */
     public static void initNube(String apiToken, String appContainerIdentifier, DroidNubeKitConstants.kEnvironmentType environmentType, Context context) {
-        DroidNubeKit.getInstance().apiToken = apiToken;
-        DroidNubeKit.getInstance().environmentType = environmentType;
-        DroidNubeKit.getInstance().appContainerIdentifier = appContainerIdentifier;
-        DroidNubeKit.getInstance().context = context;
-        DroidNubeKit.getInstance().checkForSession();
-
-        try {
-            DroidNubeKit.getInstance().modelClasses = DroidNubeKit.getInstance().getClasspathClasses();
-        } catch (Exception e) {
-            //Todo throw inizialization exception
-            e.printStackTrace();
-        }
+        getInstance().init(apiToken, appContainerIdentifier, environmentType, context);
     }
 
     /**
      * Fetch records using a query
      * @param queryRequest The query request object
-     * @param environmentType development / production environment
+     * @param databaseType public / private
      * @param callback callback to process the result
      */
-    public static <T> void fetchRecordsByQuery(DNKRecordQueryRequest queryRequest, DroidNubeKitConstants.kDatabaseType environmentType, final DNKCallback<List<T>> callback) {
-        DroidNubeKit.getInstance().cloudKitService.queryRecords(
+    public <T> void fetchRecordsByQuery(DNKRecordQueryRequest queryRequest, DroidNubeKitConstants.kDatabaseType databaseType, final DNKCallback<List<T>> callback) {
+        this.cloudKitService.queryRecords(
                 DroidNubeKitConstants.PROTOCOL,
-                DroidNubeKit.getInstance().appContainerIdentifier,
-                DroidNubeKit.getInstance().environmentType.toString(),
-                environmentType.toString(),
+                this.appContainerIdentifier,
+                this.environmentType.toString(),
+                databaseType.toString(),
                 queryRequest,
-                DroidNubeKit.getInstance().apiToken,
+                this.apiToken,
                 new DNKObjectProcessingCallback<DNKRecordsResponse, T>() {
                     @Override
                     public void success(DNKRecordsResponse dnkRecordsResponse, Response response) {
@@ -186,7 +192,7 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
         );
     }
 
-    public static <T> void modifyRecord(T object, DNKOperationType operationType,  DroidNubeKitConstants.kDatabaseType environmentType, final DNKCallback<List<T>> callback) {
+    public <T> void modifyRecord(T object, DNKOperationType operationType,  DroidNubeKitConstants.kDatabaseType environmentType, final DNKCallback<List<T>> callback) {
         if(!(object instanceof DNKObject)) {
             callback.failure(new Exception("Object it's not instance of DNKRecord: " + object.toString()));
             return;
@@ -202,10 +208,10 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
      * Modify a current record
      * @param objects The record to modify
      * @param operationType Operation type. More info at: https://developer.apple.com/library/prerelease/ios/documentation/DataManagement/Conceptual/CloutKitWebServicesReference
-     * @param environmentType public / private
+     * @param databaseType public / private
      * @param callback callback to process the result
      */
-    public static <T> void modifyRecord(List<T> objects, DNKOperationType operationType, DroidNubeKitConstants.kDatabaseType environmentType, final DNKCallback<List<T>> callback) {
+    public <T> void modifyRecord(List<T> objects, DNKOperationType operationType, DroidNubeKitConstants.kDatabaseType databaseType, final DNKCallback<List<T>> callback) {
 
         Map<String, DNKRecord> records = new HashMap<>();
 
@@ -226,13 +232,13 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
 
         DNKRecordModifyRequest request = DNKRecordModifyRequest.createRequest(new ArrayList<>(records.values()), operationType);
 
-        DroidNubeKit.getInstance().cloudKitService.modifyRecords(
+       this.cloudKitService.modifyRecords(
                 DroidNubeKitConstants.PROTOCOL,
-                DroidNubeKit.getInstance().appContainerIdentifier,
-                DroidNubeKit.getInstance().environmentType.toString(),
-                environmentType.toString(),
+                this.appContainerIdentifier,
+                this.environmentType.toString(),
+                databaseType.toString(),
                 request,
-                DroidNubeKit.getInstance().apiToken,
+                this.apiToken,
                 new DNKObjectProcessingCallback<DNKRecordsResponse, T>() {
                     @Override
                     public void success(DNKRecordsResponse dnkRecordsResponse, Response response) {
@@ -249,12 +255,12 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
         );
     }
 
-    public static void getCurrentUser(final DNKCallback<DNKUser> callback) {
-        DroidNubeKit.getInstance().cloudKitService.getCurrentUser(
+    public void getCurrentUser(final DNKCallback<DNKUser> callback) {
+        this.cloudKitService.getCurrentUser(
                 DroidNubeKitConstants.PROTOCOL,
-                DroidNubeKit.getInstance().appContainerIdentifier,
-                DroidNubeKit.getInstance().environmentType.toString(),
-                DroidNubeKit.getInstance().apiToken,
+                this.appContainerIdentifier,
+                this.environmentType.toString(),
+                this.apiToken,
                 new Callback<DNKUser>() {
                     @Override
                     public void success(DNKUser user, Response response) {
@@ -269,7 +275,7 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
         );
     }
 
-    public static <T> void getObjects(List<T> objects, DroidNubeKitConstants.kDatabaseType databaseType, final DNKCallback<List<T>> callback) {
+    public <T> void getObjects(List<T> objects, DroidNubeKitConstants.kDatabaseType databaseType, final DNKCallback<List<T>> callback) {
 
         if(objects == null || objects.size() == 0)
             return;
@@ -291,7 +297,7 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
      * @param databaseType
      * @param callback
      */
-    public static <T> void getRecords(List<DNKRecord> records, DroidNubeKitConstants.kDatabaseType databaseType, final DNKCallback<List<T>> callback) {
+    public <T> void getRecords(List<DNKRecord> records, DroidNubeKitConstants.kDatabaseType databaseType, final DNKCallback<List<T>> callback) {
         List<String> recordNames = new ArrayList<>();
         for(DNKRecord record : records) {
             recordNames.add(record.getRecordName());
@@ -305,16 +311,16 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
      * @param databaseType
      * @param callback
      */
-    public static <T> void getRecordByName(List<String> recordNames, DroidNubeKitConstants.kDatabaseType databaseType, final DNKCallback<List<T>> callback) {
+    public <T> void getRecordByName(List<String> recordNames, DroidNubeKitConstants.kDatabaseType databaseType, final DNKCallback<List<T>> callback) {
         DNKRecordLookupRequest request = DNKRecordLookupRequest.createMultipleRecordRequest(recordNames);
 
-        DroidNubeKit.getInstance().cloudKitService.lookupRecords(
+        this.cloudKitService.lookupRecords(
                 DroidNubeKitConstants.PROTOCOL,
-                DroidNubeKit.getInstance().appContainerIdentifier,
-                DroidNubeKit.getInstance().environmentType.toString(),
+                this.appContainerIdentifier,
+                this.environmentType.toString(),
                 databaseType.toString(),
                 request,
-                DroidNubeKit.getInstance().apiToken,
+                this.apiToken,
                 new DNKObjectProcessingCallback<DNKRecordsResponse, T>() {
                     @Override
                     public void success(DNKRecordsResponse dnkRecordsResponse, Response response) {
@@ -337,16 +343,16 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
      * @param databaseType
      * @param callback
      */
-    public static void getRecordByName(String recordName, DroidNubeKitConstants.kDatabaseType databaseType, final DNKCallback<DNKRecordsResponse> callback) {
+    public void getRecordByName(String recordName, DroidNubeKitConstants.kDatabaseType databaseType, final DNKCallback<DNKRecordsResponse> callback) {
         DNKRecordLookupRequest request = DNKRecordLookupRequest.createSingleRecordRequest(recordName);
 
-        DroidNubeKit.getInstance().cloudKitService.lookupRecords(
+        this.cloudKitService.lookupRecords(
                 DroidNubeKitConstants.PROTOCOL,
-                DroidNubeKit.getInstance().appContainerIdentifier,
-                DroidNubeKit.getInstance().environmentType.toString(),
+                this.appContainerIdentifier,
+                this.environmentType.toString(),
                 databaseType.toString(),
                 request,
-                DroidNubeKit.getInstance().apiToken,
+                this.apiToken,
                 new Callback<DNKRecordsResponse>() {
                     @Override
                     public void success(DNKRecordsResponse dnkRecordsResponse, Response response) {
@@ -363,15 +369,15 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
 
     /**
      * Fetches all the zones and their sync tokens in the specified database
-     * @param environmentType development / production environment
+     * @param databaseType public / private
      */
-    public static void getZones(DroidNubeKitConstants.kDatabaseType environmentType, final DNKCallback<List<DNKZone>> callback) {
-        DroidNubeKit.getInstance().cloudKitService.getZones(
+    public void getZones(DroidNubeKitConstants.kDatabaseType databaseType, final DNKCallback<List<DNKZone>> callback) {
+        this.cloudKitService.getZones(
                 DroidNubeKitConstants.PROTOCOL,
-                DroidNubeKit.getInstance().appContainerIdentifier,
-                DroidNubeKit.getInstance().environmentType.toString(),
-                environmentType.toString(),
-                DroidNubeKit.getInstance().apiToken,
+                this.appContainerIdentifier,
+                this.environmentType.toString(),
+                databaseType.toString(),
+                this.apiToken,
                 new Callback<List<DNKZone>>() {
                     @Override
                     public void success(List<DNKZone> zones, Response response) {
@@ -398,20 +404,20 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
      * You must declare DNKWebViewAuthActivity on the AndroidManifest.xml of your application
      * @param redirectURL redirect url provided by CloudKit
      */
-    public static void showAuthDialog(String redirectURL) {
-        Intent intent = new Intent(DroidNubeKit.getInstance().getContext(), DNKWebViewAuthActivity.class);
+    public void showAuthDialog(String redirectURL) {
+        Intent intent = new Intent(this.getContext(), DNKWebViewAuthActivity.class);
         intent.putExtra(DroidNubeKitConstants.WEBVIEW_REDIRECT_URL_EXTRA, redirectURL);
         intent.putExtra(DroidNubeKitConstants.WEBVIEW_REDIRECT_PATTERN_EXTRA, "http://localhost/");
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        DroidNubeKit.getInstance().getContext().startActivity(intent);
+        this.getContext().startActivity(intent);
     }
 
     /**
      * Defines an Auth Handler interface to control the state of CloudKit authentication
      * @param authHandler
      */
-    public static void setCloudKitAuthHandler(DNKCloudKitAuth authHandler) {
-        DroidNubeKit.getInstance().cloudKitAuthHandler = authHandler;
+    public void setCloudKitAuthHandler(DNKCloudKitAuth authHandler) {
+        this.cloudKitAuthHandler = authHandler;
     }
 
     @Override
@@ -434,13 +440,13 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
         SharedPreferences sharedPreferences = getContext().getSharedPreferences(DroidNubeKitConstants.CLOUDKIT_SHARED_PREFERENCES, Context.MODE_PRIVATE);
         String ckSession = sharedPreferences.getString(DroidNubeKitConstants.CLOUDKIT_SESSION_KEY, "");
         if(ckSession != null && ckSession.length() > 0) {
-            DroidNubeKit.getInstance().ckSession = ckSession;
+            this.ckSession = ckSession;
             checkSessionAlive();
         }
     }
 
     private void saveckSession(String ckSession) {
-        DroidNubeKit.getInstance().ckSession = ckSession;
+        this.ckSession = ckSession;
         SharedPreferences sharedPreferences = getContext().getSharedPreferences(DroidNubeKitConstants.CLOUDKIT_SHARED_PREFERENCES, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(DroidNubeKitConstants.CLOUDKIT_SESSION_KEY, ckSession);
@@ -452,8 +458,8 @@ public class DroidNubeKit implements CloudKitWebViewRedirectHandler {
         getCurrentUser(new DNKCallback<DNKUser>() {
             @Override
             public void success(DNKUser dnkUser) {
-                if (DroidNubeKit.getInstance().cloudKitAuthHandler != null)
-                    DroidNubeKit.getInstance().cloudKitAuthHandler.onAuthSucceed();
+                if (cloudKitAuthHandler != null)
+                    cloudKitAuthHandler.onAuthSucceed();
                 currentUser = dnkUser;
             }
 
