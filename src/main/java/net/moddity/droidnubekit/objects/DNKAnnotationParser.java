@@ -1,9 +1,5 @@
 package net.moddity.droidnubekit.objects;
 
-import android.content.Context;
-
-import junit.framework.Test;
-
 import net.moddity.droidnubekit.DroidNubeKit;
 import net.moddity.droidnubekit.annotations.CKField;
 import net.moddity.droidnubekit.annotations.CKReference;
@@ -16,15 +12,8 @@ import net.moddity.droidnubekit.responsemodels.DNKReference;
 import net.moddity.droidnubekit.utils.DNKFieldTypes;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import dalvik.system.DexFile;
 
 /**
  * Created by jaume on 16/7/15.

@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.gson.GsonBuilder;
@@ -13,7 +12,6 @@ import com.google.gson.reflect.TypeToken;
 
 import net.moddity.droidnubekit.annotations.RecordType;
 import net.moddity.droidnubekit.errors.DNKErrorHandler;
-import net.moddity.droidnubekit.errors.DNKException;
 import net.moddity.droidnubekit.interfaces.CloudKitService;
 import net.moddity.droidnubekit.interfaces.CloudKitWebViewRedirectHandler;
 import net.moddity.droidnubekit.interfaces.DNKCloudKitAuth;
@@ -23,7 +21,6 @@ import net.moddity.droidnubekit.requests.DNKObjectProcessingCallback;
 import net.moddity.droidnubekit.requests.DNKRecordLookupRequest;
 import net.moddity.droidnubekit.requests.DNKRecordModifyRequest;
 import net.moddity.droidnubekit.requests.DNKRecordQueryRequest;
-
 import net.moddity.droidnubekit.responsemodels.DNKRecord;
 import net.moddity.droidnubekit.responsemodels.DNKRecordField;
 import net.moddity.droidnubekit.responsemodels.DNKRecordsResponse;
@@ -44,9 +41,7 @@ import java.util.Set;
 
 import dalvik.system.DexFile;
 import retrofit.Callback;
-
 import retrofit.RequestInterceptor;
-
 import retrofit.RestAdapter;
 import retrofit.RetrofitError;
 import retrofit.client.Response;
